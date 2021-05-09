@@ -12,9 +12,25 @@
  */
 
 CHIP PC {
-    IN in[16],load,inc,reset;
+    IN in[16], load, inc, reset;
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // reset
+    Mux16(a=in, b=false, sel=reset, out=outReset);
+
+    // load
+    Not(in=reset, out=notReset);
+    And(a=notReset, b=load, out=notResetAndLoad);
+    Mux16(a=outReset, b=in, sel=notResetAndLoad, out=outLoad);
+
+    // increment
+    Not(in=load, out=notLoad);
+    And(a=notLoad, b=notReset, out=notResetAndNotLoad);
+    And(a=notResetAndNotLoad, b=inc, out=notResetAndNotLoadAndInc);
+    Inc16(in=out1, out=incIn);
+    Mux16(a=outLoad, b=incIn, sel=notResetAndNotLoadAndInc, out=outInc);
+
+    // store
+    Register(in=outInc, load=true, out=out, out=out1);
 }
