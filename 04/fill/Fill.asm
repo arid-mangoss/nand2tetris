@@ -27,17 +27,22 @@
     D;JGT
 
     @white
-    0;JMP
+    D;JEQ
 
-    (black)
-        // make all the pixels black
-        @SCREEN
-        D=A
+    (black) // make all the pixels black
 
         @blackCounter
         M=0
 
         (blackLoop)
+            @blackCounter
+            D=M
+
+            @8192
+            D=A-D
+            @loop
+            D;JLE
+
             @blackCounter
             D=M
 
@@ -47,26 +52,28 @@
 
             @blackCounter
             M=M+1
-            D=M
 
-            @8192
-            D=A-D
             @blackLoop
-            D;JGE
+            0;JMP
 
         @loop // back to beginning
         0;JMP
 
 
-    (white)
-        // make all the pixels white
-        @SCREEN
-        D=A
+    (white) // make all the pixels white
 
         @whiteCounter
         M=0
 
         (whiteLoop)
+            @whiteCounter
+            D=M
+
+            @8192
+            D=A-D
+            @loop
+            D;JLE
+
             @whiteCounter
             D=M
 
@@ -76,12 +83,9 @@
 
             @whiteCounter
             M=M+1
-            D=M
 
-            @8192
-            D=A-D
             @whiteLoop
-            D;JGE
+            0;JMP
 
         @loop // back to beginning
         0;JMP
