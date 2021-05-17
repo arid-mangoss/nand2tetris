@@ -10,3 +10,58 @@
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
 // Put your code here.
+
+
+// -- PSEUDOCODE --
+// result = 0
+// counter = 0
+
+// while true :
+//     if R0-counter <= 0 :
+//          goto end
+//     result = result + R1
+//     counter++
+// end
+// R2 = result 
+
+@result
+M=0
+
+@counter
+M=0
+
+
+(loop)
+@R0
+D=M
+
+@counter
+D=D-M
+
+@endLoop
+D;JLE
+
+@R1
+D=M
+
+@result
+M=M+D
+
+@counter
+M=M+1
+
+@loop
+0;JMP
+
+(endLoop)
+
+@result
+D=M
+
+@R2
+M=D
+
+(terminate)
+@terminate
+0;JMP
+
