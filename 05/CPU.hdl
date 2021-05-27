@@ -39,25 +39,31 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+   
+    And(a=instruction[4], b=cInstruction, out=loadD);
+    Or(a=instruction[5], b=aInstruction, out=loadA);
+ 
+    And(a=instruction[15], b=true, out=cInstruction);
+    Not(in=cInstruction, out=aInstruction);
 
-    Mux16(a=outM1, b=instruction, sel=instruction[15], out=out1);
-    //Not(in=instruction[15], out=notFirst);
-    // Register(in=out1, load=instruction[5], out[0..14]=addressM); // A reg
-    ARegister(in=outM1, load=instruction[5], out[0..14]=addressM);
+    Mux16(a=instruction, b=outALU, sel=instruction[15], out=out1);
+    ARegister(in=out1, load=loadA, out[0..14]=addressM, out=regA);
+ 
+    Mux16(a=regA, b=inM, sel=instruction[12], out=out2);
+    ALU(x=dOut, y=out2, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=outALU, zr=zr, ng=ng);
 
-    Mux16(a=out1, b=inM, sel=instruction[12], out=out2);
-    ALU(x=dOut, y=out2, zx=instruction[10], nx=instruction[9], zy=instruction[8], ny=instruction[7], f=instruction[6], no=instruction[5], out=outM, out=outM1, zr=zr, ng=ng);
-    // Register(in=outM1, load=instruction[4], out=dOut); // D reg
-    DRegister(in=outM1, load=instruction[4], out=dOut);
-
+    DRegister(in=outALU, load=loadD, out=dOut);
 
     Not(in=ng, out=notNg);
+    Not(in=zr, out=notZr);
+    And(a=notNg, b=notZr, out=positive);
     And(a=instruction[2], b=ng, out=lessZero);
     And(a=instruction[1], b=zr, out=eqZero);
-    And(a=instruction[0], b=notNg, out=greatZero);
+    And(a=instruction[0], b=positive, out=greatZero);
     Or(a=lessZero, b=eqZero, out=tmp);
-    Or(a=tmp, b=greatZero, out=load1);
-    PC(in=out1, load=load1, inc=true, reset=reset, out[0..14]=pc);
+    Or(a=tmp, b=greatZero, out=jump);
+    And(a=jump, b=cInstruction, out=jump2);
+    PC(in=regA, load=jump2, inc=true, reset=reset, out[0..14]=pc);
 
+    And(a=instruction[15], b=instruction[3], out=writeM);
 }
