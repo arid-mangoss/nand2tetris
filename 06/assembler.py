@@ -79,7 +79,7 @@ symbols = {
     'KBD': 24576
 }
 ''' --- parsing --- '''
-counter = 0
+ramAddress = 16
 
 fileContents = None
 with open('add/Add.asm', 'r') as f:
@@ -133,7 +133,7 @@ def convertJump(jump):
 
 
 def convertA(line):
-    global counter
+    global ramAddress
     variable = line.split('@')[1]
     if symbols.get(variable) is not None:
         val = symbols.get(variable)
@@ -141,9 +141,9 @@ def convertA(line):
         if variable.isnumeric():
             val = int(variable)
         else:  # is a new variable
-            symbols[variable] = counter
-            counter += 1
-            val = counter
+            symbols[variable] = ramAddress
+            ramAddress += 1
+            val = ramAddress
 
     binVal = bin(val).split('b')[1].zfill(16)
     return binVal
