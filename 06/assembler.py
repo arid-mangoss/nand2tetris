@@ -1,26 +1,27 @@
+import re
 
 compTable = {
-    '0': '101010',
-    '1': '111111',
-    '-1': '111010',
-    'D': '001100',
-    'A': '0110000',
-    '!D': '001101',
-    '!A': '0110001',
-    '-D': '001111',
-    '-A': '0110011',
-    'D+1': '011111',
+    '0':   '0101010',
+    '1':   '0111111',
+    '-1':  '0111010',
+    'D':   '0001100',
+    'A':   '0110000',
+    '!D':  '0001101',
+    '!A':  '0110001',
+    '-D':  '0001111',
+    '-A':  '0110011',
+    'D+1': '0011111',
     'A+1': '0110111',
-    'D-1': '001110',
+    'D-1': '0001110',
     'A-1': '0110010',
     'D+A': '0000010',
     'D-A': '0010011',
     'A-D': '0000111',
     'D&A': '0000000',
     'D|A': '0010101',
-    'M': '1110000',
-    '!M': '1110001',
-    '-M': '1110011',
+    'M':   '1110000',
+    '!M':  '1110001',
+    '-M':  '1110011',
     'M+1': '1110111',
     'M-1': '1110010',
     'D+M': '1000010',
@@ -77,13 +78,12 @@ symbols = {
     'SCREEN': 16384,
     'KBD': 24576
 }
-
-
 ''' --- parsing --- '''
+counter = 0
 
 fileContents = None
 with open('add/Add.asm', 'r') as f:
-    fileContents = f.readlines()
+    fileContents = f.read().splitlines()
 
 
 def trim(line):
@@ -91,42 +91,109 @@ def trim(line):
     line = line.split(r'//')
     return line[0]
 
+
 def commandType(line):
-    if line[0]=='@':
+    if line[0] == '@':
         return 'A_COMMAND'
     elif line[0] == '(':
         return 'L_COMMAND'
-    else: 
+    else:
         return 'C_COMMAND'
 
+
 def dest(line):
-    return line.split('=')[0]
+    return line.split('=')[0].strip()
+
 
 def comp(line):
-    line = line.split('=')[1]
-    line = line.split(';')[0]
+    line = re.split('=|;', line)
 
-    return line
+    return line[1].strip()
 
 
 def jump(line):
-    line = line.split('=')[1]
-    line = line.split(';')
+    line = re.split('=|;', line)
 
-    if len(line) != 2:
+    if len(line) != 3:
         return 'null'
     else:
-        return line[1]
+        return line[2].strip()
+
 
 def convertDest(dest):
     return destTable.get(dest)
 
+
 def convertComp(comp):
     return compTable.get(comp)
+
 
 def convertJump(jump):
     return jumpTable.get(jump)
 
+
+def convertA(line):
+    global counter
+    variable = line.split('@')[1]
+    if symbols.get(variable) is not None:
+        val = symbols.get(variable)
+    else:
+        if variable.isnumeric():
+            val = int(variable)
+        else:  # is a new variable
+            symbols[variable] = counter
+            counter += 1
+            val = counter
+
+    binVal = bin(val).split('b')[1].zfill(16)
+    return binVal
+
+
+def convertC(line):
+    c = convertComp(comp(line))
+    d = convertDest(dest(line))
+    j = convertJump(jump(line))
+    print('\n', line, c, d, j,  comp(line), dest(line), jump(line))
+    return ('111'+c+d+j)
+
+
 def firstPass():
+    count = 0
     for line in fileContents:
-        
+        line = trim(line)
+        if line is None or len(line) == 0:
+            continue  # go to next line
+        command = commandType(line)
+        if command == 'L_COMMAND':
+            variableName = re.split('(|)', line)[1]
+            symbols[variableName] = count
+        else:
+            count += 1
+
+
+def secondPass():
+    outputStrings = []
+    for line in fileContents:
+        line = trim(line)
+        if line is None or len(line) == 0:  # blank or comment
+            continue
+        command = commandType(line)
+        if command == 'A_COMMAND':
+            convert = convertA(line)
+        elif command == 'C_COMMAND':
+            convert = convertC(line)
+        else:
+            continue
+
+        outputStrings.append(convert)
+    print("\nthe result is: ")
+    print('\n'.join(outputStrings))
+
+
+def main():
+    firstPass()
+    secondPass()
+
+
+main()
+
