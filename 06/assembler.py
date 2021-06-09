@@ -144,7 +144,7 @@ def convertJump(jump):
 
 def convertA(line):
     global ramAddress
-    variable = line.split('@')[1]
+    variable = line.split('@')[1].strip()
     if symbols.get(variable) is not None:
         val = symbols.get(variable)
     else:
@@ -152,8 +152,8 @@ def convertA(line):
             val = int(variable)
         else:  # is a new variable
             symbols[variable] = ramAddress
-            ramAddress += 1
             val = ramAddress
+            ramAddress += 1
 
     binVal = bin(val).split('b')[1].zfill(16)
     return binVal
