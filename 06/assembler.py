@@ -1,4 +1,5 @@
 import re
+import sys
 
 compTable = {
     '0':   '0101010',
@@ -82,7 +83,7 @@ symbols = {
 ramAddress = 16
 
 fileContents = None
-with open('add/Add.asm', 'r') as f:
+with open(sys.argv[1], 'r') as f:
     fileContents = f.read().splitlines()
 
 
@@ -102,22 +103,31 @@ def commandType(line):
 
 
 def dest(line):
-    return line.split('=')[0].strip()
+    line = line.split('=')
+    if len(line) == 2:
+        return line[0].strip()
+    else:
+        return 'null'
 
 
 def comp(line):
-    line = re.split('=|;', line)
+    line = line.split(';')[0]
+    line = line.split('=')
+    if len(line) == 2:
+        line = line[1]
+    else:
+        line = line[0]
 
-    return line[1].strip()
+    return line.strip()
 
 
 def jump(line):
-    line = re.split('=|;', line)
+    line = re.split(';', line)
 
-    if len(line) != 3:
+    if len(line) != 2:
         return 'null'
     else:
-        return line[2].strip()
+        return line[1].strip()
 
 
 def convertDest(dest):
@@ -165,7 +175,7 @@ def firstPass():
             continue  # go to next line
         command = commandType(line)
         if command == 'L_COMMAND':
-            variableName = re.split('(|)', line)[1]
+            variableName = re.split('\(|\)', line)[1]
             symbols[variableName] = count
         else:
             count += 1
@@ -186,14 +196,17 @@ def secondPass():
             continue
 
         outputStrings.append(convert)
-    print("\nthe result is: ")
-    print('\n'.join(outputStrings))
+    return outputStrings
 
 
 def main():
     firstPass()
-    secondPass()
+    outputStrings = secondPass()
+    print("\nthe result is: ")
+    print('\n'.join(outputStrings))
 
+    if len(sys.argv) > 2:
+        with open(sys.argv[2], 'w') as f:
+            f.write('\n'.join(outputStrings))
 
 main()
-
